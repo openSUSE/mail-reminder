@@ -45,7 +45,7 @@ from email.MIMEText import MIMEText
 import email.utils
 import smtplib
 
-DEBUG = True
+DEBUG = False
 
 
 class ConfigException(Exception):
@@ -382,9 +382,9 @@ def main(args):
         if DEBUG:
             print mail
         else:
-            #s = smtplib.SMTP()
+            s = smtplib.SMTP()
             s.connect()
-            #s.sendmail(fromaddr, toaddrs, mime.as_string())
+            s.sendmail(fromaddr, toaddrs, mime.as_string())
 
     return 0
 
