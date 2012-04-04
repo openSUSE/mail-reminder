@@ -1,0 +1,20 @@
+From: openSUSE Roadmap Reminder <vuntz@opensuse.org>
+To: opensuse-packaging@opensuse.org
+Subject: [reminder] openSUSE %(release)s %(description)s is next week
+
+Hello all,
+
+openSUSE %(release)s %(description)s will be released next week, on
+%(date)s.
+
+Please submit your packages before Friday afternoon (UTC time) to make
+sure they will get included in this release. Leaf packages submitted
+during the week-end might also get accepted on Monday.
+
+For a quick overview of the openSUSE Roadmap, please see:
+   http://en.opensuse.org/Roadmap
+
+Thanks,
+
+-- 
+openSUSE Roadmap Reminder
