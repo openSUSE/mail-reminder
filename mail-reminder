@@ -46,8 +46,6 @@ import email.utils
 import optparse
 import smtplib
 
-DEBUG = False
-
 
 class ConfigException(Exception):
     pass
@@ -336,26 +334,13 @@ class Config:
 #######################################################################
 
 
-def main(args):
-    parser = optparse.OptionParser(usage='Usage: %prog CONFIG_FILE')
-
-    parser.add_option('--no-debug', dest='no_debug', action='store_true',
-                      help='really send the mails')
-
-    (options, args) = parser.parse_args()
-
-    if len(args) != 1:
-        parser.print_help()
-        return 1
-
-    config_file = args[0]
-
+def handle_config_file(config_file, no_debug):
     try:
         config = Config(config_file)
         events = config.get_events()
     except ConfigException, e:
         print >> sys.stderr, e
-        return 1
+        return False
 
     mailed = False
 
@@ -366,7 +351,7 @@ def main(args):
             (fromaddr, toaddrs, mail) = config.get_mail(event_day, event_descr)
         except ConfigException, e:
             print >> sys.stderr, e
-            return 1
+            return False
 
         if config.mail_on_rel_days is not None:
             delta = datetime.timedelta(days=config.mail_on_rel_days)
@@ -387,12 +372,39 @@ def main(args):
 
         mailed = True
 
-        if DEBUG or not options.no_debug:
-            print mail
+        if not no_debug:
+            print 'Would send mail for %s:' % config_file
+            print ''
+            print '   ==========='
+            for line in mail.split('\n'):
+                print '   ' + line
+            print '   ==========='
+            print ''
         else:
             s = smtplib.SMTP()
             s.connect()
             s.sendmail(fromaddr, toaddrs, mime.as_string())
+
+    return True
+
+
+#######################################################################
+
+
+def main(args):
+    parser = optparse.OptionParser(usage='Usage: %prog CONFIG_FILE [...]')
+
+    parser.add_option('--no-debug', dest='no_debug', action='store_true',
+                      help='really send the mails')
+
+    (options, args) = parser.parse_args()
+
+    if len(args) == 0:
+        parser.print_help()
+        return 1
+
+    for config_file in args:
+        handle_config_file(config_file, options.no_debug)
 
     return 0
 
