@@ -1,0 +1,27 @@
+From: openSUSE Meeting Reminder <vuntz@opensuse.org>
+To: opensuse-project@opensuse.org
+Subject: [reminder] openSUSE Project Meeting tomorrow at %(hour)s:%(minute)s UTC
+
+Hello all,
+
+The biweekly project meeting will be held tomorrow at %(hour)s:%(minute)s UTC
+in #opensuse-project on freenode. Everybody is invited to join and
+participate!
+
+Find out what time the meeting will be in your timezone:
+  http://timeanddate.com/worldclock/fixedtime.html?day=%(day)d&month=%(month)d&year=%(year)d&hour=%(hour)s&min=%(minute)s&sec=0
+
+Agenda of the meeting:
+  http://en.opensuse.org/openSUSE:Project_meeting#Agenda_for_the_next_meeting
+
+If you cannot participate and want a specific question to be answered
+during the meeting, please add your question to:
+  http://en.opensuse.org/openSUSE:Project_meeting#Questions_Section
+
+Minutes and logs of previous meetings can be found at:
+  http://community.opensuse.org/meetings/opensuse-project/
+
+Thanks,
+
+-- 
+openSUSE Meeting Reminder
