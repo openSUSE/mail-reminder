@@ -392,18 +392,28 @@ def handle_config_file(config_file, no_debug):
 
 
 def main(args):
-    parser = optparse.OptionParser(usage='Usage: %prog CONFIG_FILE [...]')
+    parser = optparse.OptionParser(usage='Usage: %prog [options] [CONFIG_FILE ...]')
 
     parser.add_option('--no-debug', dest='no_debug', action='store_true',
                       help='really send the mails')
 
     (options, args) = parser.parse_args()
 
-    if len(args) == 0:
-        parser.print_help()
+    if len(args) != 0:
+        config_files = args
+    else:
+        datadir = os.path.join(os.path.dirname(__file__), 'data')
+        try:
+            config_files = [ os.path.join(datadir, basename) for basename in os.listdir(datadir) if basename.endswith('.conf') ]
+        except OSError:
+            # Ignore exception if directory doesn't exist
+            pass
+
+    if not config_files:
+        print >> sys.stderr, 'No configuration files could be automatically found. Please explicitly pass them as arguments.'
         return 1
 
-    for config_file in args:
+    for config_file in config_files:
         handle_config_file(config_file, options.no_debug)
 
     return 0
