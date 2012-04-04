@@ -1,0 +1,397 @@
+#!/usr/bin/env python
+# vim: set ts=4 sw=4 et: coding=UTF-8
+
+#
+# Copyright (c) 2010-2012, Novell, Inc.
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#  * Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#  * Neither the name of the <ORGANIZATION> nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+#
+# (Licensed under the simplified BSD license)
+#
+# Authors: Vincent Untz <vuntz@opensuse.org>
+#
+
+
+import os
+import sys
+
+import ConfigParser
+import datetime
+from email.MIMEText import MIMEText
+import email.utils
+import smtplib
+
+DEBUG = True
+
+
+class ConfigException(Exception):
+    pass
+
+
+#######################################################################
+
+
+class Config:
+
+    def __init__(self, config_file):
+        self.config_file = config_file
+
+        self.type = None
+        self.biweekly_week = None
+        self.day = None
+
+        self.scheduled_events = []
+
+        self.mail_on_rel_days = None
+        self.mail_on_day_week_before = None
+        self.template = None
+        self.template_variables = {}
+
+        self._parse()
+        self._check()
+
+
+    def _parse(self):
+        def _get_helper(parser, section, key, default = None):
+            if parser.has_option(section, key):
+                return parser.get(section, key)
+            else:
+                return default
+
+        parser = ConfigParser.SafeConfigParser()
+        parser.read(self.config_file)
+
+        self.type = _get_helper(parser, 'event', 'type', None)
+        self.biweekly_week = _get_helper(parser, 'event', 'biweekly_week', None)
+        self.day = _get_helper(parser, 'event', 'day', None)
+
+        self.mail_on_rel_days = _get_helper(parser, 'mail', 'mail_on_rel_days', None)
+        self.mail_on_day_week_before = _get_helper(parser, 'mail', 'mail_on_day_week_before', None)
+        self.template = _get_helper(parser, 'mail', 'template', None)
+        if self.template:
+            if self.template[0] != '/':
+                self.template_fullpath = os.path.join(os.path.dirname(self.config_file), self.template)
+            else:
+                self.template_fullpath = self.template
+
+        if parser.has_section('template variables'):
+            for (key, value) in parser.items('template variables'):
+                self.template_variables[key] = value
+
+        if parser.has_section('schedule'):
+            for (key, value) in parser.items('schedule'):
+                date_fields = key.split('-')
+                if len(date_fields) != 3:
+                    raise ConfigException('Cannot parse date of event \'%s\' of schedule in %s.' % (key, self.config_file))
+
+                try:
+                    date = datetime.date(int(date_fields[0]), int(date_fields[1]), int(date_fields[2]))
+                except ValueError:
+                    raise ConfigException('Cannot parse date of event \'%s\' of schedule in %s.' % (key, self.config_file))
+
+                self.scheduled_events.append((date, value))
+
+
+    def _check(self):
+        def _raise_missing_key(key, config_file):
+            raise ConfigException('Missing \'%s\' key in %s.' % (key, config_file))
+
+        def _convert_to_int(value, key, config_file, minval = None, maxval = None, check_none = True):
+            if value is None:
+                _raise_missing_key(key, self.config_file)
+
+            if minval is not None:
+                if maxval is not None:
+                    emsg = 'Invalid value for \'%s\' key in %s: should be an integer between %d and %d.' % (key, self.config_file, minval, maxval)
+                else:
+                    emsg = 'Invalid value for \'%s\' key in %s: should be an integer above %d.' % (key, self.config_file, minval)
+            elif maxval is not None:
+                emsg = 'Invalid value for \'%s\' key in %s: should be an integer below %d.' % (key, self.config_file, maxval)
+            else:
+                emsg = 'Invalid value for \'%s\' key in %s: should be an integer.' % (key, self.config_file)
+
+            try:
+                retval = int(value)
+            except ValueError:
+                raise ConfigException(emsg)
+
+            if minval is not None and retval < minval:
+                raise ConfigException(emsg)
+            if maxval is not None and retval > maxval:
+                raise ConfigException(emsg)
+
+            return retval
+
+        if self.type is None:
+            _raise_missing_key('type', self.config_file)
+        if self.type not in ['weekly', 'biweekly', 'monthly', 'schedule']:
+            raise ConfigException('Unknown type \'%s\' in %s.' % (self.type, self.config_file))
+
+        if self.type == 'biweekly':
+            if self.biweekly_week is None:
+                raise ConfigException('Missing \'biweekly_week\' key for biweekly config in %s.' % (self.config_file,))
+            if self.biweekly_week not in ['0', '1']:
+                raise ConfigException('Invalid value for \'biweekly_week\' key in %s: should be either 0 or 1.' % (self.config_file,))
+            self.biweekly_week = int(self.biweekly_week)
+        else:
+            if self.biweekly_week is not None:
+                raise ConfigException('\'biweekly_week\' key used while type is not \'biweekly\' in %s.' % (self.config_file,))
+
+        if self.type in ['weekly', 'biweekly']:
+            self.day = _convert_to_int(self.day, 'day', self.config_file, minval=1, maxval=7)
+        elif self.type in ['monthly']:
+            self.day = _convert_to_int(self.day, 'day', self.config_file, minval=1, maxval=31)
+        elif self.type in ['schedule']:
+            if self.day is not None:
+                raise ConfigException('\'day\' key cannot be used with type \'schedule\' in %s.' % (self.config_file,))
+            if not self.scheduled_events:
+                raise ConfigException('No event defined for schedule in %s.' % (self.config_file,))
+            for (date, descr) in self.scheduled_events:
+                if not descr:
+                    raise ConfigException('Event of schedule on %s has no description in %s.' % (date, self.config_file))
+
+        if self.mail_on_rel_days is not None:
+            if self.mail_on_day_week_before is not None:
+                raise ConfigException('\'mail_on_rel_days\' and \'mail_on_day_week_before\' keys cannot be used at the same time in %s.' % (self.config_file,))
+
+            self.mail_on_rel_days = _convert_to_int(self.mail_on_rel_days, 'mail_on_rel_days', self.config_file, minval=-6, maxval=-1)
+        elif self.mail_on_day_week_before is not None:
+            self.mail_on_day_week_before = _convert_to_int(self.mail_on_day_week_before, 'mail_on_day_week_before', self.config_file, minval=1, maxval=7)
+        else:
+            raise ConfigException('Missing \'mail_on_rel_days\' or \'mail_on_day_week_before\' key in %s.' % (self.config_file,))
+
+        if self.template is None:
+            _raise_missing_key('template', self.config_file)
+        if not os.path.exists(self.template_fullpath):
+            raise ConfigException('Template file \'%s\' from %s does not exist.' % (self.template, self.config_file))
+
+
+    def get_events(self):
+        if self.type in ['weekly', 'biweekly', 'monthly']:
+            # We'll find date of next periodic event
+
+            today = datetime.date.today()
+
+            if self.type == 'weekly':
+                week_day = today.isoweekday()
+
+                if week_day < self.day:
+                    # next event is this week
+                    delta = datetime.timedelta(days=self.day-week_day)
+                else:
+                    # next event is next week
+                    delta = datetime.timedelta(days=7 + self.day-week_day)
+
+                event_day = today + delta
+                return [ (event_day, '') ]
+
+            elif self.type == 'biweekly':
+                (year, week_number, week_day) = today.isocalendar()
+
+                right_week = (week_number % 2 == self.biweekly_week)
+                if week_day < self.day:
+                    if right_week:
+                        # it can still happen this week
+                        delta = datetime.timedelta(days=self.day-week_day)
+                    else:
+                        # next event is next week
+                        delta = datetime.timedelta(days=7 + self.day-week_day)
+                else:
+                    if right_week:
+                        # next event is in two weeks
+                        delta = datetime.timedelta(days=14 + self.day-week_day)
+                    else:
+                        # next event is next week
+                        delta = datetime.timedelta(days=7 + self.day-week_day)
+
+                event_day = today + delta
+                return [ (event_day, '') ]
+
+            elif self.type == 'monthly':
+                def get_date(year, month, day):
+                    # months don't all have the same number of days
+                    while day >= 1:
+                        try:
+                            return datetime.date(year, month, day)
+                        except ValueError:
+                            day -= 1
+                    raise Exception('Internal error: cannot compute next monthly day')
+
+                if today.day < self.day:
+                    # next event is this month
+                    event_day = get_date(today.year, today.month, self.day)
+                else:
+                    # next event is next month
+                    if today.month == 12:
+                        event_day = get_date(today.year + 1, 1, self.day)
+                    else:
+                        event_day = get_date(today.year, today.month + 1, self.day)
+
+                return [ (event_day, '') ]
+
+        elif self.type in ['schedule']:
+            return self.scheduled_events
+
+
+    def get_mail(self, date, descr):
+        date_dict = { 'year': date.year,
+                      'month': date.month,
+                      'day': date.day,
+                      'date': date.strftime('%A %d %B %Y'),
+                      'description': descr }
+
+        # FIXME: might be better (and simpler?) to just use email.parser.Parser()
+
+        try:
+            fd = open(self.template_fullpath)
+        except Exception, e:
+            raise ConfigException('Cannot open template file \'%s\'.' % (self.template,))
+
+        template = fd.read()
+
+        # Copy the dict so we don't modify it
+        full_dict = self.template_variables.copy()
+        # Prefer our own values, since they should not be overwritten
+        full_dict.update(date_dict)
+
+        template = template % full_dict
+        lines = template.split('\n')
+
+        headers = {}
+        headers_line = 0
+
+        # Find headers
+        for line in lines:
+            f = line.find(':')
+            # No ':' in line, so not a header anymore; note that an empty line
+            # between headers and body is enough to trigger this, obviously
+            if f == -1:
+                break
+
+            headers[line[:f]] = line[f+1:]
+            headers_line += 1
+
+        body_lines = lines[headers_line+1:]
+        # Remove empty lines at the beginning/end
+        while len(body_lines) > 0 and body_lines[0].strip() == '':
+            body_lines = body_lines[1:]
+        while len(body_lines) > 0 and body_lines[-1].strip() == '':
+            body_lines = body_lines[:-1]
+
+        body = '\n'.join(body_lines)
+        mime = MIMEText(body)
+
+        for key in headers.keys():
+            if not key in ['From', 'To', 'Subject', 'Reply-To']:
+                raise ConfigException('Mail template file \'%s\' contains a non-authorized header: \'%s\'.' % (self.template, key))
+
+        def _check_header_present(header, headers, template):
+            if not header in headers:
+                raise ConfigException('Mail template file \'%s\' does not contain header \'%s\'.' % (template, header))
+
+        _check_header_present('From', headers.keys(), self.template)
+        _check_header_present('To', headers.keys(), self.template)
+        _check_header_present('Subject', headers.keys(), self.template)
+
+        for (key, value) in headers.iteritems():
+            mime[key] = value
+
+        fromaddrs = [ addr for (name, addr) in email.utils.getaddresses([ headers['From'] ]) ]
+        toaddrs = [ addr for (name, addr) in email.utils.getaddresses([ headers['To'] ]) ]
+
+        if len(fromaddrs) != 1:
+            raise ConfigException('Mail template file \'%s\' does not contain exactly one author for mail (\'From: me@example.net\').' % (self.template,))
+
+        if len(toaddrs) == 0:
+            raise ConfigException('Mail template file \'%s\' does not contain recipients for mail (\'To: jane@example.net, joe@example.net\').' % (self.template,))
+
+        return (fromaddrs[0], toaddrs, mime.as_string())
+
+
+#######################################################################
+
+
+def main(args):
+    if len(args) != 2:
+        print >>sys.stderr, 'Usage: %s CONFIG_FILE' % os.path.basename(args[0])
+        return 1
+
+    config_file = args[1]
+
+    try:
+        config = Config(config_file)
+        events = config.get_events()
+    except ConfigException, e:
+        print >> sys.stderr, e
+        return 1
+
+    mailed = False
+
+    for (event_day, event_descr) in events:
+        # Get the mail before checking if we should it, so we can error out if the
+        # mail template is broken
+        try:
+            (fromaddr, toaddrs, mail) = config.get_mail(event_day, event_descr)
+        except ConfigException, e:
+            print >> sys.stderr, e
+            return 1
+
+        if config.mail_on_rel_days is not None:
+            delta = datetime.timedelta(days=config.mail_on_rel_days)
+            check_day = event_day + delta
+        elif config.mail_on_day_week_before is not None:
+            delta = datetime.timedelta(days=config.mail_on_day_week_before - event_day.isoweekday(), weeks=-1)
+            check_day = event_day + delta
+        else:
+            raise Exception('Internal error: no instruction on when to send mail')
+
+        today = datetime.date.today()
+        if today != check_day:
+            continue
+
+        if mailed:
+            print >>sys.stderr, 'Warning: event \'%s\' not sent as an event has already been sent.' % event_descr
+            continue
+
+        mailed = True
+
+        if DEBUG:
+            print mail
+        else:
+            #s = smtplib.SMTP()
+            s.connect()
+            #s.sendmail(fromaddr, toaddrs, mime.as_string())
+
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+      ret = main(sys.argv)
+      sys.exit(ret)
+    except KeyboardInterrupt:
+      pass
