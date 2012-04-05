@@ -1,9 +1,9 @@
 mail-reminder
 =============
 
-mail-reminder is a small utility that is intended to be used in a cron job to
-send mail reminders about events. Events can be weekly, biweekly or monthly
-recurring events, or events defined in a schedule.
+mail-reminder is a small utility that is intended to be used in a daily cron
+job to send mail reminders about events. Events can be weekly, biweekly or
+monthly recurring events, or events defined in a schedule.
 
 The events considered by mail-reminder are defined in .conf files. By default,
 mail-reminder handles all .conf files in the data subdirectory from the
@@ -12,6 +12,19 @@ mail-reminder directory. Alternatively, .conf files can be passed as arguments.
 Since it's too easy to send mails by accident while testing mail-reminder, the
 default behavior is to use a debug output. Once everything is configured
 properly, the --no-debug option can be used so that mails will be sent.
+
+
+Cron configuration example
+==========================
+
+Here's a crontab line that can be used to run mail-reminder every day at 4pm.
+
+0 16 * * * /path/to/mail-reminder
+
+Alternatively, the following line can be used but will generally send mails
+around midnight:
+
+@daily /path/to/mail-reminder
 
 
 Configuration files
