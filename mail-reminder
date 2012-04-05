@@ -364,6 +364,11 @@ def handle_config_file(config_file, no_debug):
 
         today = datetime.date.today()
         if today != check_day:
+            if not no_debug:
+                if event_descr:
+                  print '%s: event \'%s\' on %s, reminder to be sent on %s.' % (config_file, event_descr, event_day, check_day)
+                else:
+                  print '%s: event on %s, reminder to be sent on %s.' % (config_file, event_day, check_day)
             continue
 
         if mailed:
@@ -373,7 +378,7 @@ def handle_config_file(config_file, no_debug):
         mailed = True
 
         if not no_debug:
-            print 'Would send mail for %s:' % config_file
+            print '%s: reminder mail for event:' % config_file
             print ''
             print '   ==========='
             for line in mail.split('\n'):
