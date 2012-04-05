@@ -1,0 +1,162 @@
+mail-reminder
+=============
+
+mail-reminder is a small utility that is intended to be used in a cron job to
+send mail reminders about events. Events can be weekly, biweekly or monthly
+recurring events, or events defined in a schedule.
+
+The events considered by mail-reminder are defined in .conf files. By default,
+mail-reminder handles all .conf files in the data subdirectory from the
+mail-reminder directory. Alternatively, .conf files can be passed as arguments.
+
+Since it's too easy to send mails by accident while testing mail-reminder, the
+default behavior is to use a debug output. Once everything is configured
+properly, the --no-debug option can be used so that mails will be sent.
+
+
+Configuration files
+===================
+
+Configuration files are using a simple key-file format.
+
+There are four sections that can be used:
+
+[event]
+## Contains the main description of the events (mandatory).
+## Following keys exist:
+#
+# 'type' key is mandatory. Possible value:
+#   - weekly: weekly events
+#   - biweekly: biweekly events (every two weeks :-))
+#   - monthly: monthly events
+#   - schedule: events defined in the [schedule] section
+type=
+#
+# 'biweekly_week' key is mandatory if 'type' key is 'biweekly'. This should be
+# either 0 or 1, to decide which of the week from every two weeks is the right
+# one.
+biweekly_week=
+#
+# 'day' key is mandatory if 'type' key is one of 'weekly', 'biweekly',
+# 'monthly'. For 'weekly' and 'biweekly', its value should be between 1 (Monday)
+# and 7 (Sunday). For 'monthly', its value should be between 1 and 31 (note that
+# if 29, 30 or 31 is used, the last day of the month will trigger the reminder
+# if the configured day doesn't exist in the month -- like in February)
+day=
+
+[mail]
+## Contains the information about when and what to send by mail (mandatory).
+## One of 'mail_on_rel_days' and 'mail_on_day_week_before' keys must be present.
+#
+# 'mail_on_rel_days' can be used to send a reminder a few days before an event.
+# Its value should be between -6 (6 days before event) and -1 (the day before
+# event).
+mail_on_rel_days=
+#
+# 'mail_on_day_week_before' can be used to send a reminder the week before an
+# event, on a fixed day. Its value should be between 1 (Monday) and 7 (Sunday).
+mail_on_day_week_before=
+#
+# 'template' key is mandatory. It defines the path to a mail template to be used
+# for the reminder.
+template=
+
+[template variables]
+## Contains some variable definitions, for variables to be used in the mail
+## template (optional).
+#
+# Definition are in the following form:
+# variable=value
+
+[schedule]
+## List of events for a configuration of type 'schedule' (mandatory if type is
+## 'schedule).
+#
+# Definition are in the following form:
+# date=description
+# 'date' is in the YYYY-MM-DD format. For instance: 2012-03-31
+#
+# Note that the description will automatically be set as a template variable
+# for the event.
+
+
+Mail template
+=============
+
+The mail template should contain all headers of the mail that are needed for the
+mail to make sense (generally: From, To, Subject) and the mail body.
+
+Variable substitution will be used. For instance, if the 'user' variable is
+defined in the 'template variables' section, then all uses of '%(user)s' in the
+template will be expanded to the value of the 'user' variable.
+
+The following variables can always be used:
+
+ - year: year of next event
+ - month: month year of next event (between 1 and 12)
+ - day: day in month of next event (between 1 and 31)
+ - date: date of next event in human-readable format (Thursday 05 April 2012)
+
+A variable that is not defined cannot be used in the template; it will result in
+an error.
+
+
+Configuration examples
+======================
+
+Here is an example of a weekly event occurring each Wednesday, for which a
+reminder will be set on Tuesday:
+
+  [event]
+  type=weekly
+  # Meeting on Wednesday (Monday = 1)
+  day=3
+  
+  [mail]
+  # Mail the day before
+  mail_on_rel_days=-1
+  template=meeting.mail
+  
+  [template variables]
+  hour=20
+  minute=00
+
+Here is an example of a schedule of events, with reminders being sent on a fixed
+day the week before an event:
+
+  [event]
+  type=schedule
+  
+  [mail]
+  # Mail on Wednesday of the week before next event (Monday = 1)
+  mail_on_day_week_before=3
+  template=schedule.mail
+  
+  [template variables]
+  cycle=
+  
+  [schedule]
+  2012-04-29=Planning starts
+  2012-05-20=Implentation starts
+  2012-06-04=Testing starts
+
+
+Mail template example
+=====================
+
+The following is a simple example of mail template. The configuration file has
+'status=not too important' in the 'template variables' section.
+
+  From: Reminder Script <reminder@example.net>
+  To: jane@example.net
+  Subject: [reminder] Next event is on %(date)s
+  
+  Hi Jane,
+  
+  This is a reminder that your next event is on %(date)s.
+  This event is %(status)s.
+  
+  Thanks,
+  
+  -- 
+  Reminder Script
