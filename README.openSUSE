@@ -1,0 +1,19 @@
+Setup of mail-reminder for the openSUSE project
+===============================================
+
+The script is run every day at noon on the boosters virtual machine. It uses
+the events defined in the ./data directory.
+
+When updating the data for events in git, you will need to update the files on
+the virtual machine too. We could automatically update the code from git, but
+it wouldn't be very safe to do unattended updates without looking at the
+changes in git.
+
+Just ask one of the boosters to do the following on the boosters virtual
+machine:
+
+  # check changes in git are fine, if yes then update the code
+  su - opensuse-scripts
+  cd ~/src/mail-reminder; git pull
+  # run the script once (debug mode by default) to see potential errors
+  ./mail-reminder
