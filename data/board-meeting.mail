@@ -4,8 +4,9 @@ Subject: [reminder] Board Conf Call tomorrow at %(hour)s:%(minute)s UTC
 
 Hello all,
 
-The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s UTC
-with the usual conf call system.
+The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s CEST 
+(Nuremberg / Geeko Meridian time) with the usual conf call system.
+This mean %(hour)-2 UTC during summer time and %(hour)-1 UTC during winter time
 
 Agenda should have been sent already, or will be sent in the next few
 hours.
