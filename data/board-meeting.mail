@@ -1,14 +1,18 @@
 From: openSUSE Meeting Reminder <no-reply@opensuse.org>
 To: board@opensuse.org
-Subject: [reminder] Board Conf Call tomorrow at %(hour)s:%(minute)s UTC
+Subject: [reminder] Board Conf Call tomorrow at %(hour)s:%(minute)s CEST
 
 Hello all,
 
-The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s UTC
-with the usual conf call system.
+The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s CEST
+which mean (Nuremberg time) with the usual conf call system.
+During winter DST time it mean %(hour)s-1 UTC.
+During summer DST time it mean %(hour)s-2 UTC.
 
 Agenda should have been sent already, or will be sent in the next few
-hours.
+hours. Don't forget to add your topics to :
+https://en.opensuse.org/openSUSE:Board_meeting
+
 
 If you cannot participate, please reply to this mail to say so.
 
