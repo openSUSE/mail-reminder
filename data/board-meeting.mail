@@ -4,10 +4,12 @@ Subject: [reminder] Board Conf Call tomorrow at %(hour)s:%(minute)s CEST
 
 Hello all,
 
-The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s CEST
-which mean (Nuremberg time) with the usual conf call system.
-During winter DST time it mean %(hour)s-1 UTC.
-During summer DST time it mean %(hour)s-2 UTC.
+The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s Nuremberg Time
+Meeting will be in the regular Board Meeting Room
+https://plus.google.com/hangouts/_/event/c8gejncsa3ttskp4nntmluj3qv4?hl=en-GB&authuser=0
+
+During winter time, Nuremberg time is %(hour)s-1 UTC.
+During daylight savings/summer time, Nuremberg time is %(hour)s-2 UTC.
 
 Agenda should have been sent already, or will be sent in the next few
 hours. Don't forget to add your topics to :
