@@ -5,8 +5,13 @@ Subject: [reminder] Board Conf Call tomorrow at %(hour)s:%(minute)s CEST
 Hello all,
 
 The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s Nuremberg Time
-Meeting will be in the regular Board Meeting Room
-https://plus.google.com/hangouts/_/event/c8gejncsa3ttskp4nntmluj3qv4?hl=en-GB&authuser=0
+Meeting will be in the regular Board Meeting Room https://global.gotomeeting.com/join/734844645
+
+Alternatively you can dial in following numbers using access code 734-844-645
+United States (Toll Free): 1 866 899 4679
+Czech Republic (Toll Free): 800 143570 
+Denmark (Toll Free): 8025 3112 
+Germany (Toll Free): 0 800 723 5274 
 
 During winter time, Nuremberg time is %(hour)s-1 UTC.
 During daylight savings/summer time, Nuremberg time is %(hour)s-2 UTC.
