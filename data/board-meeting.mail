@@ -1,22 +1,13 @@
 From: openSUSE Meeting Reminder <no-reply@opensuse.org>
 To: board@opensuse.org
-Subject: [reminder] Board Conf Call tomorrow at %(hour)s:%(minute)s NUE Time
+Subject: [reminder] Board Conf Call in two days at %(hour)s:%(minute)s NUE Time
 
 Hello all,
 
-The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s Nuremberg Time
-Meeting will be in the regular Board Meeting Room https://tinyurl.com/opensuseboard
+The biweekly board conf call will be held in two days at %(hour)s:%(minute)s Nuremberg Time
+in the regular Board Meeting Room https://tinyurl.com/opensuseboard
 
-During winter time, Nuremberg time is %(hour)s-1 UTC.
-During daylight savings/summer time, Nuremberg time is %(hour)s-2 UTC.
+The agenda should have been sent already, or should be sent soon.
+Add your topics at https://en.opensuse.org/openSUSE_talk:Board_meetings
 
-Agenda should have been sent already, or will be sent in the next few
-hours. Don't forget to add your topics to :
-https://en.opensuse.org/openSUSE_talk:Board_meetings
-
-If you cannot participate, please reply to this mail to say so.
-
-Thanks,
-
--- 
-openSUSE Meeting Reminder
+If you cannot participate, please advise by replying to this mail.
