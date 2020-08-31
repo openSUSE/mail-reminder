@@ -4,8 +4,8 @@ Subject: [reminder] Board Conf Call in two days at %(hour)s:%(minute)s NUE Time
 
 Hello all,
 
-The biweekly board conf call will be held in two days at %(hour)s:%(minute)s Nuremberg Time
-in the regular Board Meeting Room https://tinyurl.com/opensuseboard
+The biweekly board conf call will be held tomorrow at %(hour)s:%(minute)s Nuremberg Time
+in the regular Board Meeting Room https://meet2.opensuse.org/OSBoard
 
 The agenda should have been sent already, or should be sent soon.
 Add your topics at https://en.opensuse.org/openSUSE_talk:Board_meetings
