@@ -5,7 +5,7 @@ Subject: [reminder] Board Conf Call next Tuesday at %(hour)s:%(minute)s NUE Time
 Hello all,
 
 The biweekly board conf call will be held in two days at %(hour)s:%(minute)s Nuremberg Time
-Meeting will be in the regular Board Meeting Room https://mee.opensuse.org/OSBoard
+Meeting will be in the regular Board Meeting Room https://meet.opensuse.org/OSBoard
 
 During winter time, Nuremberg time is %(hour)s-1 UTC.
 During daylight savings/summer time, Nuremberg time is %(hour)s-2 UTC.
