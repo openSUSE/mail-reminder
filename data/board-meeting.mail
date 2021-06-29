@@ -1,13 +1,13 @@
 From: openSUSE Meeting Reminder <no-reply@opensuse.org>
-To: board@opensuse.org
-Subject: [reminder] Board Conf Call next Monday at %(hour)s:%(minute)s NUE Time
+To: openSUSE Project and Community related discussions <project@lists.opensuse.org>
+Bcc: openSUSE Project Board <board@opensuse.org>
+Subject: Reminder meeting : openSUSE Board meeting next Monday (%(hour)s:%(minute)s Europe/Berlin)
 
 Hello all,
 
-The biweekly board conf call will be held in two days at %(hour)s:%(minute)s Nuremberg Time
+The biweekly board conf call will be held in two days at %(hour)s:%(minute)s Europe/Berlin
 Meeting will be in the regular Board Meeting Room https://meet.opensuse.org/OSBoard
 
-The agenda should have been sent already, or should be sent soon.
-Add your topics at https://en.opensuse.org/openSUSE:Board_meetings
+Current Topics: https://code.opensuse.org/board/tickets/issues?status=Open&tags=meeting
 
 If you cannot participate, please advise by replying to this mail.
