@@ -340,7 +340,7 @@ def handle_config_file(config_file, no_debug):
     try:
         config = Config(config_file)
         events = config.get_events()
-    except ConfigException, e:
+    except ConfigException as e:
         print >> sys.stderr, e
         return False
 
@@ -351,16 +351,16 @@ def handle_config_file(config_file, no_debug):
         # mail template is broken
         try:
             (fromaddr, toaddrs, mail) = config.get_mail(event_day, event_descr)
-        except ConfigException, e:
+        except ConfigException as e:
             print >> sys.stderr, e
             return False
 
         if config.mail_on_rel_days is not None:
-            delta = datetime.timedelta(days=config.mail_on_rel_days)
+            delta = datetime.timedelta(days=config.mail_on_rel_days + 7)  # Shift by 7 days
             check_day = event_day + delta
         elif config.mail_on_day_week_before is not None:
             delta = datetime.timedelta(days=config.mail_on_day_week_before - event_day.isoweekday(), weeks=-1)
-            check_day = event_day + delta
+            check_day = event_day + delta + datetime.timedelta(weeks=1)  # Shift by 1 week
         else:
             raise Exception('Internal error: no instruction on when to send mail')
 
@@ -368,13 +368,13 @@ def handle_config_file(config_file, no_debug):
         if today != check_day:
             if not no_debug:
                 if event_descr:
-                  print '%s: event \'%s\' on %s, reminder to be sent on %s.' % (config_file, event_descr, event_day, check_day)
+                    print '%s: event \'%s\' on %s, reminder to be sent on %s.' % (config_file, event_descr, event_day, check_day)
                 else:
-                  print '%s: event on %s, reminder to be sent on %s.' % (config_file, event_day, check_day)
+                    print '%s: event on %s, reminder to be sent on %s.' % (config_file, event_day, check_day)
             continue
 
         if mailed:
-            print >>sys.stderr, 'Warning: event \'%s\' not sent as an event has already been sent.' % event_descr
+            print >> sys.stderr, 'Warning: event \'%s\' not sent as an event has already been sent.' % event_descr
             continue
 
         mailed = True
@@ -393,6 +393,7 @@ def handle_config_file(config_file, no_debug):
             s.sendmail(fromaddr, toaddrs, mail)
 
     return True
+
 
 
 #######################################################################
