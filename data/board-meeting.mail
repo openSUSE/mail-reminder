@@ -4,7 +4,7 @@ Subject: Reminder meeting : openSUSE Board meeting next Monday (%(hour)s:%(minut
 
 Hello all,
 
-The biweekly board conf call will be held in two days at %(hour)s:%(minute)s Europe/Berlin time (CET = UTC+1)
+The biweekly board conf call will be held in two days at %(hour)s:%(minute)s Europe/Berlin time (CET = UTC+2)
 Meeting will be in the regular Board Meeting Room https://meet.opensuse.org/OSBoard
 
 Current Topics: https://code.opensuse.org/board/tickets/issues?status=Open&tags=meeting
