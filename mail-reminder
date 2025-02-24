@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim: set ts=4 sw=4 et: coding=UTF-8
 
 #
@@ -39,9 +39,9 @@
 import os
 import sys
 
-import ConfigParser
+from configparser import ConfigParser
 import datetime
-from email.MIMEText import MIMEText
+from email.mime.text import MIMEText
 import email.utils
 import optparse
 import smtplib
@@ -81,7 +81,7 @@ class Config:
             else:
                 return default
 
-        parser = ConfigParser.SafeConfigParser()
+        parser = ConfigParser()
         parser.read(self.config_file)
 
         self.type = _get_helper(parser, 'event', 'type', None)
@@ -267,7 +267,7 @@ class Config:
 
         try:
             fd = open(self.template_fullpath)
-        except Exception, e:
+        except Exception as e:
             raise ConfigException('Cannot open template file \'%s\'.' % (self.template,))
 
         template = fd.read()
@@ -304,7 +304,7 @@ class Config:
         body = '\n'.join(body_lines)
         mime = MIMEText(body)
 
-        for key in headers.keys():
+        for key in list(headers.keys()):
             if not key in ['From', 'To', 'Subject', 'Reply-To']:
                 raise ConfigException('Mail template file \'%s\' contains a non-authorized header: \'%s\'.' % (self.template, key))
 
@@ -312,11 +312,11 @@ class Config:
             if not header in headers:
                 raise ConfigException('Mail template file \'%s\' does not contain header \'%s\'.' % (template, header))
 
-        _check_header_present('From', headers.keys(), self.template)
-        _check_header_present('To', headers.keys(), self.template)
-        _check_header_present('Subject', headers.keys(), self.template)
+        _check_header_present('From', list(headers.keys()), self.template)
+        _check_header_present('To', list(headers.keys()), self.template)
+        _check_header_present('Subject', list(headers.keys()), self.template)
 
-        for (key, value) in headers.iteritems():
+        for (key, value) in headers.items():
             mime[key] = value
 
         mime['X-Mailer'] = 'https://github.com/openSUSE/mail-reminder'
@@ -341,7 +341,7 @@ def handle_config_file(config_file, no_debug):
         config = Config(config_file)
         events = config.get_events()
     except ConfigException as e:
-        print >> sys.stderr, e
+        print(e, file=sys.stderr)
         return False
 
     mailed = False
@@ -352,7 +352,7 @@ def handle_config_file(config_file, no_debug):
         try:
             (fromaddr, toaddrs, mail) = config.get_mail(event_day, event_descr)
         except ConfigException as e:
-            print >> sys.stderr, e
+            print(e, file=sys.stderr)
             return False
 
         if config.mail_on_rel_days is not None:
@@ -368,25 +368,25 @@ def handle_config_file(config_file, no_debug):
         if today != check_day:
             if not no_debug:
                 if event_descr:
-                    print '%s: event \'%s\' on %s, reminder to be sent on %s.' % (config_file, event_descr, event_day, check_day)
+                    print('%s: event \'%s\' on %s, reminder to be sent on %s.' % (config_file, event_descr, event_day, check_day))
                 else:
-                    print '%s: event on %s, reminder to be sent on %s.' % (config_file, event_day, check_day)
+                    print('%s: event on %s, reminder to be sent on %s.' % (config_file, event_day, check_day))
             continue
 
         if mailed:
-            print >> sys.stderr, 'Warning: event \'%s\' not sent as an event has already been sent.' % event_descr
+            print('Warning: event \'%s\' not sent as an event has already been sent.' % event_descr, file=sys.stderr)
             continue
 
         mailed = True
 
         if not no_debug:
-            print '%s: reminder mail for event:' % config_file
-            print ''
-            print '   ==========='
+            print('%s: reminder mail for event:' % config_file)
+            print('')
+            print('   ===========')
             for line in mail.split('\n'):
-                print '   ' + line
-            print '   ==========='
-            print ''
+                print('   ' + line)
+            print('   ===========')
+            print('')
         else:
             s = smtplib.SMTP()
             s.connect()
@@ -418,7 +418,7 @@ def main(args):
             pass
 
     if not config_files:
-        print >> sys.stderr, 'No configuration files could be automatically found. Please explicitly pass them as arguments.'
+        print('No configuration files could be automatically found. Please explicitly pass them as arguments.', file=sys.stderr)
         return 1
 
     for config_file in config_files:
