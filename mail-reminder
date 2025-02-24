@@ -39,12 +39,12 @@
 import os
 import sys
 
-from configparser import ConfigParser
 import datetime
 from email.mime.text import MIMEText
 import email.utils
 import optparse
 import smtplib
+import tomllib
 
 
 class ConfigException(Exception):
@@ -75,34 +75,35 @@ class Config:
 
 
     def _parse(self):
-        def _get_helper(parser, section, key, default = None):
-            if parser.has_option(section, key):
-                return parser.get(section, key)
+        def _get_helper(dictcfg, section, key, default = None):
+            if dictcfg[section] and key in dictcfg[section].keys():
+                return dictcfg[section][key]
             else:
                 return default
 
-        parser = ConfigParser()
-        parser.read(self.config_file)
+        tomlcfg = {}
+        with open(self.config_file, 'rb') as tomlcfgfile:
+            tomlcfg = tomllib.load(tomlcfgfile)
 
-        self.type = _get_helper(parser, 'event', 'type', None)
-        self.biweekly_week = _get_helper(parser, 'event', 'biweekly_week', None)
-        self.day = _get_helper(parser, 'event', 'day', None)
+        self.type = _get_helper(tomlcfg, 'event', 'type', None)
+        self.biweekly_week = _get_helper(tomlcfg, 'event', 'biweekly_week', None)
+        self.day = _get_helper(tomlcfg, 'event', 'day', None)
 
-        self.mail_on_rel_days = _get_helper(parser, 'mail', 'mail_on_rel_days', None)
-        self.mail_on_day_week_before = _get_helper(parser, 'mail', 'mail_on_day_week_before', None)
-        self.template = _get_helper(parser, 'mail', 'template', None)
+        self.mail_on_rel_days = _get_helper(tomlcfg, 'mail', 'mail_on_rel_days', None)
+        self.mail_on_day_week_before = _get_helper(tomlcfg, 'mail', 'mail_on_day_week_before', None)
+        self.template = _get_helper(tomlcfg, 'mail', 'template', None)
         if self.template:
             if self.template[0] != '/':
                 self.template_fullpath = os.path.join(os.path.dirname(self.config_file), self.template)
             else:
                 self.template_fullpath = self.template
 
-        if parser.has_section('template variables'):
-            for (key, value) in parser.items('template variables'):
+        if 'template_variables' in tomlcfg.keys():
+            for (key, value) in tomlcfg['template_variables'].items():
                 self.template_variables[key] = value
 
-        if parser.has_section('schedule'):
-            for (key, value) in parser.items('schedule'):
+        if 'schedule' in tomlcfg.keys():
+            for (key, value) in tomlcfg['schedule'].items():
                 date_fields = key.split('-')
                 if len(date_fields) != 3:
                     raise ConfigException('Cannot parse date of event \'%s\' of schedule in %s.' % (key, self.config_file))
@@ -153,7 +154,7 @@ class Config:
         if self.type == 'biweekly':
             if self.biweekly_week is None:
                 raise ConfigException('Missing \'biweekly_week\' key for biweekly config in %s.' % (self.config_file,))
-            if self.biweekly_week not in ['0', '1']:
+            if self.biweekly_week not in [0, 1]:
                 raise ConfigException('Invalid value for \'biweekly_week\' key in %s: should be either 0 or 1.' % (self.config_file,))
             self.biweekly_week = int(self.biweekly_week)
         else:
@@ -412,7 +413,7 @@ def main(args):
     else:
         datadir = os.path.join(os.path.dirname(__file__), 'data')
         try:
-            config_files = [ os.path.join(datadir, basename) for basename in os.listdir(datadir) if basename.endswith('.conf') ]
+            config_files = [ os.path.join(datadir, basename) for basename in os.listdir(datadir) if basename.endswith('.toml') ]
         except OSError:
             # Ignore exception if directory doesn't exist
             pass
