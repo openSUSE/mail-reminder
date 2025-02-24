@@ -319,7 +319,7 @@ class Config:
         for (key, value) in headers.iteritems():
             mime[key] = value
 
-        mime['X-Mailer'] = 'https://gitorious.org/opensuse/mail-reminder'
+        mime['X-Mailer'] = 'https://github.com/openSUSE/mail-reminder'
 
         fromaddrs = [ addr for (name, addr) in email.utils.getaddresses([ headers['From'] ]) ]
         toaddrs = [ addr for (name, addr) in email.utils.getaddresses([ headers['To'] ]) ]
