@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim: set ts=4 sw=4 et: coding=UTF-8
 
 #
@@ -39,12 +39,12 @@
 import os
 import sys
 
-import ConfigParser
 import datetime
-from email.MIMEText import MIMEText
+from email.mime.text import MIMEText
 import email.utils
 import optparse
 import smtplib
+import tomllib
 
 
 class ConfigException(Exception):
@@ -75,34 +75,35 @@ class Config:
 
 
     def _parse(self):
-        def _get_helper(parser, section, key, default = None):
-            if parser.has_option(section, key):
-                return parser.get(section, key)
+        def _get_helper(dictcfg, section, key, default = None):
+            if dictcfg[section] and key in dictcfg[section].keys():
+                return dictcfg[section][key]
             else:
                 return default
 
-        parser = ConfigParser.SafeConfigParser()
-        parser.read(self.config_file)
+        tomlcfg = {}
+        with open(self.config_file, 'rb') as tomlcfgfile:
+            tomlcfg = tomllib.load(tomlcfgfile)
 
-        self.type = _get_helper(parser, 'event', 'type', None)
-        self.biweekly_week = _get_helper(parser, 'event', 'biweekly_week', None)
-        self.day = _get_helper(parser, 'event', 'day', None)
+        self.type = _get_helper(tomlcfg, 'event', 'type', None)
+        self.biweekly_week = _get_helper(tomlcfg, 'event', 'biweekly_week', None)
+        self.day = _get_helper(tomlcfg, 'event', 'day', None)
 
-        self.mail_on_rel_days = _get_helper(parser, 'mail', 'mail_on_rel_days', None)
-        self.mail_on_day_week_before = _get_helper(parser, 'mail', 'mail_on_day_week_before', None)
-        self.template = _get_helper(parser, 'mail', 'template', None)
+        self.mail_on_rel_days = _get_helper(tomlcfg, 'mail', 'mail_on_rel_days', None)
+        self.mail_on_day_week_before = _get_helper(tomlcfg, 'mail', 'mail_on_day_week_before', None)
+        self.template = _get_helper(tomlcfg, 'mail', 'template', None)
         if self.template:
             if self.template[0] != '/':
                 self.template_fullpath = os.path.join(os.path.dirname(self.config_file), self.template)
             else:
                 self.template_fullpath = self.template
 
-        if parser.has_section('template variables'):
-            for (key, value) in parser.items('template variables'):
+        if 'template_variables' in tomlcfg.keys():
+            for (key, value) in tomlcfg['template_variables'].items():
                 self.template_variables[key] = value
 
-        if parser.has_section('schedule'):
-            for (key, value) in parser.items('schedule'):
+        if 'schedule' in tomlcfg.keys():
+            for (key, value) in tomlcfg['schedule'].items():
                 date_fields = key.split('-')
                 if len(date_fields) != 3:
                     raise ConfigException('Cannot parse date of event \'%s\' of schedule in %s.' % (key, self.config_file))
@@ -153,7 +154,7 @@ class Config:
         if self.type == 'biweekly':
             if self.biweekly_week is None:
                 raise ConfigException('Missing \'biweekly_week\' key for biweekly config in %s.' % (self.config_file,))
-            if self.biweekly_week not in ['0', '1']:
+            if self.biweekly_week not in [0, 1]:
                 raise ConfigException('Invalid value for \'biweekly_week\' key in %s: should be either 0 or 1.' % (self.config_file,))
             self.biweekly_week = int(self.biweekly_week)
         else:
@@ -267,7 +268,7 @@ class Config:
 
         try:
             fd = open(self.template_fullpath)
-        except Exception, e:
+        except Exception as e:
             raise ConfigException('Cannot open template file \'%s\'.' % (self.template,))
 
         template = fd.read()
@@ -304,7 +305,7 @@ class Config:
         body = '\n'.join(body_lines)
         mime = MIMEText(body)
 
-        for key in headers.keys():
+        for key in list(headers.keys()):
             if not key in ['From', 'To', 'Subject', 'Reply-To']:
                 raise ConfigException('Mail template file \'%s\' contains a non-authorized header: \'%s\'.' % (self.template, key))
 
@@ -312,14 +313,14 @@ class Config:
             if not header in headers:
                 raise ConfigException('Mail template file \'%s\' does not contain header \'%s\'.' % (template, header))
 
-        _check_header_present('From', headers.keys(), self.template)
-        _check_header_present('To', headers.keys(), self.template)
-        _check_header_present('Subject', headers.keys(), self.template)
+        _check_header_present('From', list(headers.keys()), self.template)
+        _check_header_present('To', list(headers.keys()), self.template)
+        _check_header_present('Subject', list(headers.keys()), self.template)
 
-        for (key, value) in headers.iteritems():
+        for (key, value) in headers.items():
             mime[key] = value
 
-        mime['X-Mailer'] = 'https://gitorious.org/opensuse/mail-reminder'
+        mime['X-Mailer'] = 'https://github.com/openSUSE/mail-reminder'
 
         fromaddrs = [ addr for (name, addr) in email.utils.getaddresses([ headers['From'] ]) ]
         toaddrs = [ addr for (name, addr) in email.utils.getaddresses([ headers['To'] ]) ]
@@ -341,7 +342,7 @@ def handle_config_file(config_file, no_debug):
         config = Config(config_file)
         events = config.get_events()
     except ConfigException as e:
-        print >> sys.stderr, e
+        print(e, file=sys.stderr)
         return False
 
     mailed = False
@@ -352,7 +353,7 @@ def handle_config_file(config_file, no_debug):
         try:
             (fromaddr, toaddrs, mail) = config.get_mail(event_day, event_descr)
         except ConfigException as e:
-            print >> sys.stderr, e
+            print(e, file=sys.stderr)
             return False
 
         if config.mail_on_rel_days is not None:
@@ -368,25 +369,25 @@ def handle_config_file(config_file, no_debug):
         if today != check_day:
             if not no_debug:
                 if event_descr:
-                    print '%s: event \'%s\' on %s, reminder to be sent on %s.' % (config_file, event_descr, event_day, check_day)
+                    print('%s: event \'%s\' on %s, reminder to be sent on %s.' % (config_file, event_descr, event_day, check_day))
                 else:
-                    print '%s: event on %s, reminder to be sent on %s.' % (config_file, event_day, check_day)
+                    print('%s: event on %s, reminder to be sent on %s.' % (config_file, event_day, check_day))
             continue
 
         if mailed:
-            print >> sys.stderr, 'Warning: event \'%s\' not sent as an event has already been sent.' % event_descr
+            print('Warning: event \'%s\' not sent as an event has already been sent.' % event_descr, file=sys.stderr)
             continue
 
         mailed = True
 
         if not no_debug:
-            print '%s: reminder mail for event:' % config_file
-            print ''
-            print '   ==========='
+            print('%s: reminder mail for event:' % config_file)
+            print('')
+            print('   ===========')
             for line in mail.split('\n'):
-                print '   ' + line
-            print '   ==========='
-            print ''
+                print('   ' + line)
+            print('   ===========')
+            print('')
         else:
             s = smtplib.SMTP()
             s.connect()
@@ -412,13 +413,13 @@ def main(args):
     else:
         datadir = os.path.join(os.path.dirname(__file__), 'data')
         try:
-            config_files = [ os.path.join(datadir, basename) for basename in os.listdir(datadir) if basename.endswith('.conf') ]
+            config_files = [ os.path.join(datadir, basename) for basename in os.listdir(datadir) if basename.endswith('.toml') ]
         except OSError:
             # Ignore exception if directory doesn't exist
             pass
 
     if not config_files:
-        print >> sys.stderr, 'No configuration files could be automatically found. Please explicitly pass them as arguments.'
+        print('No configuration files could be automatically found. Please explicitly pass them as arguments.', file=sys.stderr)
         return 1
 
     for config_file in config_files:
