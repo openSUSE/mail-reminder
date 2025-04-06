@@ -1,6 +1,6 @@
 [event]
 type = "biweekly"   # Confirms the pattern is every other week
-biweekly_week = 1   # Sets the initial week to begin counting biweekly
+biweekly_week = 0   # Sets the initial week to begin counting biweekly
 day = 1             # Sets meeting day to Monday
 
 [mail]

@@ -357,11 +357,11 @@ def handle_config_file(config_file, no_debug):
             return False
 
         if config.mail_on_rel_days is not None:
-            delta = datetime.timedelta(days=config.mail_on_rel_days + 7)  # Shift by 7 days
+            delta = datetime.timedelta(days=config.mail_on_rel_days)
             check_day = event_day + delta
         elif config.mail_on_day_week_before is not None:
             delta = datetime.timedelta(days=config.mail_on_day_week_before - event_day.isoweekday(), weeks=-1)
-            check_day = event_day + delta + datetime.timedelta(weeks=1)  # Shift by 1 week
+            check_day = event_day + delta
         else:
             raise Exception('Internal error: no instruction on when to send mail')
 
