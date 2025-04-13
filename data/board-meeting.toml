@@ -4,8 +4,7 @@ biweekly_week = 0   # Sets the initial week to begin counting biweekly
 day = 1             # Sets meeting day to Monday
 
 [mail]
-# Mail one day before
-mail_on_rel_days = -1  # Notify one day before as per comment
+mail_on_rel_days = -2  # Notify two days before
 template = "board-meeting.mail"
 
 [template_variables]
