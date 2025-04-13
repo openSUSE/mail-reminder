@@ -9,4 +9,4 @@ template = "board-meeting.mail"
 
 [template_variables]
 hour = "14"
-minute = "00"
+minute = "30"
